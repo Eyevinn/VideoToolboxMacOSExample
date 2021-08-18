@@ -7,16 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		44C27C9026CCF2110062A949 /* VideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C27C8F26CCF2110062A949 /* VideoView.swift */; };
+		44C27C9226CCF2D10062A949 /* RenderViewRep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C27C9126CCF2D10062A949 /* RenderViewRep.swift */; };
+		44C27C9426CCF4750062A949 /* AVDisplayViewRep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C27C9326CCF4750062A949 /* AVDisplayViewRep.swift */; };
+		44C27C9626CCF5A00062A949 /* AVManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C27C9526CCF5A00062A949 /* AVManager.swift */; };
+		44C27C9826CD00B70062A949 /* H264Encoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C27C9726CD00B70062A949 /* H264Encoder.swift */; };
+		44C27C9A26CD01830062A949 /* H264Decoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C27C9926CD01830062A949 /* H264Decoder.swift */; };
 		44D11BB626CC1B1400F0CEC1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44D11BB526CC1B1400F0CEC1 /* AppDelegate.swift */; };
-		44D11BB826CC1B1400F0CEC1 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44D11BB726CC1B1400F0CEC1 /* ViewController.swift */; };
 		44D11BBA26CC1B1C00F0CEC1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 44D11BB926CC1B1C00F0CEC1 /* Assets.xcassets */; };
 		44D11BBD26CC1B1C00F0CEC1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 44D11BBB26CC1B1C00F0CEC1 /* Main.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		44C27C8F26CCF2110062A949 /* VideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoView.swift; sourceTree = "<group>"; };
+		44C27C9126CCF2D10062A949 /* RenderViewRep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderViewRep.swift; sourceTree = "<group>"; };
+		44C27C9326CCF4750062A949 /* AVDisplayViewRep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVDisplayViewRep.swift; sourceTree = "<group>"; };
+		44C27C9526CCF5A00062A949 /* AVManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVManager.swift; sourceTree = "<group>"; };
+		44C27C9726CD00B70062A949 /* H264Encoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = H264Encoder.swift; sourceTree = "<group>"; };
+		44C27C9926CD01830062A949 /* H264Decoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = H264Decoder.swift; sourceTree = "<group>"; };
 		44D11BB226CC1B1400F0CEC1 /* VideoToolboxMacOSExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VideoToolboxMacOSExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		44D11BB526CC1B1400F0CEC1 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		44D11BB726CC1B1400F0CEC1 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		44D11BB926CC1B1C00F0CEC1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		44D11BBC26CC1B1C00F0CEC1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		44D11BBE26CC1B1C00F0CEC1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -54,11 +64,16 @@
 			isa = PBXGroup;
 			children = (
 				44D11BB526CC1B1400F0CEC1 /* AppDelegate.swift */,
-				44D11BB726CC1B1400F0CEC1 /* ViewController.swift */,
 				44D11BB926CC1B1C00F0CEC1 /* Assets.xcassets */,
 				44D11BBB26CC1B1C00F0CEC1 /* Main.storyboard */,
 				44D11BBE26CC1B1C00F0CEC1 /* Info.plist */,
 				44D11BBF26CC1B1C00F0CEC1 /* VideoToolboxMacOSExample.entitlements */,
+				44C27C8F26CCF2110062A949 /* VideoView.swift */,
+				44C27C9126CCF2D10062A949 /* RenderViewRep.swift */,
+				44C27C9326CCF4750062A949 /* AVDisplayViewRep.swift */,
+				44C27C9526CCF5A00062A949 /* AVManager.swift */,
+				44C27C9726CD00B70062A949 /* H264Encoder.swift */,
+				44C27C9926CD01830062A949 /* H264Decoder.swift */,
 			);
 			path = VideoToolboxMacOSExample;
 			sourceTree = "<group>";
@@ -132,8 +147,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				44D11BB826CC1B1400F0CEC1 /* ViewController.swift in Sources */,
+				44C27C9626CCF5A00062A949 /* AVManager.swift in Sources */,
+				44C27C9226CCF2D10062A949 /* RenderViewRep.swift in Sources */,
+				44C27C9026CCF2110062A949 /* VideoView.swift in Sources */,
+				44C27C9826CD00B70062A949 /* H264Encoder.swift in Sources */,
 				44D11BB626CC1B1400F0CEC1 /* AppDelegate.swift in Sources */,
+				44C27C9A26CD01830062A949 /* H264Decoder.swift in Sources */,
+				44C27C9426CCF4750062A949 /* AVDisplayViewRep.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
