@@ -10,7 +10,7 @@ import CoreFoundation
 import CoreMedia
 import VideoToolbox
 
-class H264Coder {
+class H264Encoder {
 
     var session: VTCompressionSession?
     let callback: (CMSampleBuffer) -> Void
@@ -21,11 +21,11 @@ class H264Coder {
         guard let refcon = refcon,
               status == noErr,
               let sampleBuffer = sampleBuffer else {
-            print("H264Coder outputCallback sampleBuffer NIUL or status: \(status)")
+            print("H264Coder outputCallback sampleBuffer NULL or status: \(status)")
             return
         }
 
-        let encoder: H264Coder = Unmanaged<H264Coder>.fromOpaque(refcon).takeUnretainedValue()
+        let encoder: H264Encoder = Unmanaged<H264Encoder>.fromOpaque(refcon).takeUnretainedValue()
         encoder.processSample(sampleBuffer)
     }
 
@@ -55,7 +55,7 @@ class H264Coder {
         let copiedSampleBuffer: UnsafeMutablePointer<CMSampleBuffer?> = .allocate(capacity: 1)
         let copiedDataBuffer: UnsafeMutablePointer<CMBlockBuffer?> = .allocate(capacity: 1)
 
-        let (data, length) = H264Coder.getDataFrom(blockBuffer)
+        let (data, length) = H264Encoder.getDataFrom(blockBuffer)
         print("retainedData", data)
         let nsData = NSMutableData(data: data)
         CMBlockBufferCreateEmpty (allocator: nil,capacity: 0,flags: kCMBlockBufferAlwaysCopyDataFlag, blockBufferOut: copiedDataBuffer)
@@ -68,8 +68,8 @@ class H264Coder {
                                        dataLength: length,
                                        flags: kCMBlockBufferAlwaysCopyDataFlag);
 
-        let (timingInfo, timingInfoCount) = H264Coder.getTimingArray(sampleBuffer)
-        let (sizeArray, sizeArrayCount) = H264Coder.getSizeArray(sampleBuffer)
+        let (timingInfo, timingInfoCount) = H264Encoder.getTimingArray(sampleBuffer)
+        let (sizeArray, sizeArrayCount) = H264Encoder.getSizeArray(sampleBuffer)
         let sampleCount = CMSampleBufferGetNumSamples(sampleBuffer)
 
         let retainedDataBuffer = Unmanaged.passRetained(copiedDataBuffer.pointee!)
@@ -89,7 +89,7 @@ class H264Coder {
         )
         timingInfo.deallocate()
         sizeArray.deallocate()
-        H264Coder.copyAttachments(from: sampleBuffer, to: copiedSampleBuffer.pointee!)
+        H264Encoder.copyAttachments(from: sampleBuffer, to: copiedSampleBuffer.pointee!)
 //        print(blockBuffer, "copied", copiedDataBuffer.pointee!)
 //        print(sampleBuffer, "copied", copiedSampleBuffer.pointee!)
         return copiedSampleBuffer.pointee!
@@ -98,7 +98,10 @@ class H264Coder {
 
     init(width: Int32, height: Int32, callback: @escaping (CMSampleBuffer) -> Void) {
         self.callback = callback
-        let status = VTCompressionSessionCreate(allocator: kCFAllocatorDefault, width: width, height: height, codecType: kCMVideoCodecType_H264, encoderSpecification: nil, imageBufferAttributes: nil, compressedDataAllocator: nil, outputCallback: outputCallback, refcon: Unmanaged.passUnretained(self).toOpaque(), compressionSessionOut: &session)
+      let encoderSpecification = [
+          kVTVideoEncoderSpecification_RequireHardwareAcceleratedVideoEncoder: true as CFBoolean
+      ] as CFDictionary
+        let status = VTCompressionSessionCreate(allocator: kCFAllocatorDefault, width: width, height: height, codecType: kCMVideoCodecType_H264, encoderSpecification: encoderSpecification, imageBufferAttributes: nil, compressedDataAllocator: nil, outputCallback: outputCallback, refcon: Unmanaged.passUnretained(self).toOpaque(), compressionSessionOut: &session)
         print("H264Coder init \(status == noErr) \(status)")
     }
 
@@ -217,13 +220,13 @@ extension EncodedSampleBuffer {
         formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)!
         sampleCount = CMSampleBufferGetNumSamples(sampleBuffer)
         let blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer)!
-        let (data, bufferDataLenght) = H264Coder.getDataFrom(blockBuffer)
+        let (data, bufferDataLenght) = H264Encoder.getDataFrom(blockBuffer)
         self.bufferDataLenght = bufferDataLenght
         bufferData = data as Data
-        let (timingInfoPtr, timingInfoCount) = H264Coder.getTimingArray(sampleBuffer)
+        let (timingInfoPtr, timingInfoCount) = H264Encoder.getTimingArray(sampleBuffer)
         timingInfo = timingInfoPtr.pointee
         self.timingInfoCount = timingInfoCount
-        let (sizeArrayPtr, sizeArrayCount) = H264Coder.getSizeArray(sampleBuffer)
+        let (sizeArrayPtr, sizeArrayCount) = H264Encoder.getSizeArray(sampleBuffer)
         let a = UnsafeMutableBufferPointer(start: sizeArrayPtr, count: sizeArrayCount)
         sizeArray = Array(a)
     }

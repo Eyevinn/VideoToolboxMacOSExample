@@ -22,7 +22,7 @@ final class AVDisplayViewRep: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: AVDisplayView, context: Context) {
-        print("updateNSView")
+        print("updateNSView AVDisplayView")
     }
 
     func render(_ sampleBuffer: CMSampleBuffer) {

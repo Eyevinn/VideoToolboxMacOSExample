@@ -17,13 +17,16 @@ final class RenderViewRep: NSViewRepresentable {
     var view: RenderView!
 
     func makeNSView(context: Context) -> RenderView {
-        let view = RenderView(frame: .zero, device: MTLCreateSystemDefaultDevice())
+        guard let device = MTLCreateSystemDefaultDevice() else {
+            fatalError( "Failed to get the system's default Metal device." )
+        }
+        let view = RenderView(frame: .zero, device: device)
         self.view = view
         return view
     }
 
     func updateNSView(_ nsView: RenderView, context: Context) {
-        print("updateNSView")
+        print("updateNSView Metal")
     }
 
     func render(_ sampleBuffer: CMSampleBuffer) {

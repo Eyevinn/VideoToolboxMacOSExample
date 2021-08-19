@@ -19,7 +19,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
   let decoderView = VideoView()
   
   
-  private var encoder: H264Coder?
+  private var encoder: H264Encoder?
   private var decoder: H264Decoder?
   
   let avManager = AVManager()
@@ -63,9 +63,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
       if encoder == nil,
          let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer) {
           let dimens = formatDescription.dimensions
-          encoder = H264Coder(width: dimens.width, height: dimens.height, callback: { encodedBuffer in
-              // self.sampleBufferNoOpProcessor(encodedBuffer)
-            self.decodeCompressedFrame(encodedBuffer)
+          encoder = H264Encoder(width: dimens.width, height: dimens.height, callback: { encodedBuffer in
+            self.sampleBufferNoOpProcessor(encodedBuffer)
+            // self.decodeCompressedFrame(encodedBuffer)
           })
       }
       encoder?.encode(sampleBuffer)

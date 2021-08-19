@@ -10,7 +10,7 @@ import SwiftUI
 
 struct VideoView: View {
 
-    let displayView = RenderViewRep() // metal or AVDisplayViewRep to use AVSampleBufferDisplayLayer
+    let displayView = RenderViewRep() // Metal or AVDisplayViewRep to use AVSampleBufferDisplayLayer
     // let displayView = AVDisplayViewRep()
     
     var body: some View {

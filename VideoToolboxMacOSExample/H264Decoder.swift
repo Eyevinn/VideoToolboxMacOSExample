@@ -32,7 +32,7 @@ class H264Decoder {
         var callbackRecord = VTDecompressionOutputCallbackRecord(decompressionOutputCallback: callback, decompressionOutputRefCon: refcon)
 
         let decoderSpecification = [
-            kVTVideoDecoderSpecification_RequireHardwareAcceleratedVideoDecoder: false as CFBoolean
+            kVTVideoDecoderSpecification_RequireHardwareAcceleratedVideoDecoder: true as CFBoolean
         ] as CFDictionary
 
         let status = VTDecompressionSessionCreate(allocator: kCFAllocatorDefault, formatDescription: formatDescription, decoderSpecification: decoderSpecification, imageBufferAttributes: nil, outputCallback: &callbackRecord, decompressionSessionOut: &session)
