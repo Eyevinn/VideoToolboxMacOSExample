@@ -36,6 +36,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
     cameraWindow.contentView = NSHostingView(rootView: cameraView)
     cameraWindow.makeKeyAndOrderFront(nil)
     
+    // To see the decompressed video, uncomment line 69
     decompressedWindow = NSWindow(
       contentRect: NSRect(x: 0, y: 0, width: 480, height: 300),
       styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
@@ -64,8 +65,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
          let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer) {
           let dimens = formatDescription.dimensions
           encoder = H264Encoder(width: dimens.width, height: dimens.height, callback: { encodedBuffer in
-            self.sampleBufferNoOpProcessor(encodedBuffer)
-            // self.decodeCompressedFrame(encodedBuffer)
+            self.sampleBufferNoOpProcessor(encodedBuffer) // Logs the buffers to the console for inspection
+            // self.decodeCompressedFrame(encodedBuffer) // uncomment to see decoded video
           })
       }
       encoder?.encode(sampleBuffer)
