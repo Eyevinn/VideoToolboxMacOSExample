@@ -53,6 +53,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       // self.sampleBufferNoOpProcessor(encodedBuffer) // Logs the buffers to the console for inspection
       self.decodeCompressedFrame(encodedBuffer) // uncomment to see decoded video
     })
+    encoder?.delegate = self
     encoder?.prepareToEncodeFrames()
     
     avManager.delegate = self

@@ -23,6 +23,8 @@ protocol H264EncoderDelegate: AnyObject {
 
 class H264Encoder {
 
+    // MARK: - Properties
+    weak var delegate: AVManagerDelegate?
     var session: VTCompressionSession?
     let callback: (CMSampleBuffer) -> Void
     var width: Int32
@@ -45,14 +47,24 @@ class H264Encoder {
         }
         let encoder: H264Encoder = Unmanaged<H264Encoder>.fromOpaque(refcon).takeUnretainedValue()
         
-//        Attempting to get keyFrame
-//        guard let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: true) else { return }
-//        let dict = unsafeBitCast(CFArrayGetValueAtIndex(attachmentsArray, 0), to: CFDictionary.self) as NSDictionary
-//        print("keys: \(dict.attributeKeys)")
+        var isKeyFrame:Bool = false
+
+//      Attempting to get keyFrame
+        guard let attachmentsArray:CFArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false) else { return }
+        if (CFArrayGetCount(attachmentsArray) > 0) {
+            let dict = CFArrayGetValueAtIndex(attachmentsArray, 0)
+            let dictRef:CFDictionary = unsafeBitCast(dict, to: CFDictionary.self)
+            let value = CFDictionaryGetValue(dictRef, unsafeBitCast(kCMSampleAttachmentKey_NotSync, to: UnsafeRawPointer.self))
+            if (value != nil) {
+                print("Keyframe found...")
+                isKeyFrame = true
+            }
+        }
+        
         encoder.processSample(sampleBuffer)
     }
 
-    func processSample(_ sampleBuffer: CMSampleBuffer) {
+    private func processSample(_ sampleBuffer: CMSampleBuffer) {
         guard nil != CMSampleBufferGetDataBuffer(sampleBuffer) else {
             print("H264Coder outputCallback dataBuffer NIL")
             return
