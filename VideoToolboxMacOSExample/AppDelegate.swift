@@ -10,7 +10,7 @@ import Cocoa
 import SwiftUI
 
 @main
-class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate {
 
   var cameraWindow: NSWindow!
   var decompressedWindow: NSWindow!
@@ -18,7 +18,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
   let cameraView = VideoView()
   let decoderView = VideoView()
   
-
   private var encoder: H264Encoder?
   private var decoder: H264Decoder?
   
@@ -64,13 +63,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
     // Insert code here to tear down your application
   }
 
-  // MARK: - AVManagerDelegate
-
-  func onSampleBuffer(_ sampleBuffer: CMSampleBuffer) {
-      cameraView.render(sampleBuffer)
-      encoder?.encode(sampleBuffer)
-  }
-
   private func sampleBufferNoOpProcessor(_ sampleBuffer: CMSampleBuffer) {
     print("Buffer received: \(sampleBuffer)")
   }
@@ -84,6 +76,35 @@ class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
       }
       decoder?.decode(sampleBuffer)
   }
+}
 
+// MARK: - AVManagerDelegate
+extension AppDelegate : AVManagerDelegate {
+    func onSampleBuffer(_ sampleBuffer: CMSampleBuffer) {
+        cameraView.render(sampleBuffer)
+        encoder?.encode(sampleBuffer)
+    }
+}
+// MARK: - H264EncoderDelegate
+
+extension AppDelegate : H264EncoderDelegate {
+    func dataCallBack(_ data: Data!, frameType: FrameType) {
+        let byteHeader:[UInt8] = [0,0,0,1]
+        var byteHeaderData = Data(byteHeader)
+        byteHeaderData.append(data)
+        // Could decode here
+        // H264Decoder.decode(byteHeaderData)
+    }
+
+    func spsppsDataCallBack(_ sps: Data!, pps: Data!) {
+        let spsbyteHeader:[UInt8] = [0,0,0,1]
+        var spsbyteHeaderData = Data(spsbyteHeader)
+        var ppsbyteHeaderData = Data(spsbyteHeader)
+        spsbyteHeaderData.append(sps)
+        ppsbyteHeaderData.append(pps)
+        // Could decode here
+        // H264Decoder.decode(spsbyteHeaderData)
+        // H264Decoder.decode(ppsbyteHeaderData)
+    }
 }
 

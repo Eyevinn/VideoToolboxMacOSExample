@@ -10,6 +10,17 @@ import CoreFoundation
 import CoreMedia
 import VideoToolbox
 
+enum FrameType : UInt {
+    case FrameType_SPSPPS
+    case FrameType_IFramse
+    case FrameType_PFrame
+}
+
+protocol H264EncoderDelegate: AnyObject {
+    func dataCallBack(_ data: Data!, frameType: FrameType)
+    func spsppsDataCallBack(_ sps:Data!, pps: Data!)
+}
+
 class H264Encoder {
 
     var session: VTCompressionSession?
