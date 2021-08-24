@@ -14,6 +14,8 @@ class H264Encoder {
 
     var session: VTCompressionSession?
     let callback: (CMSampleBuffer) -> Void
+    var width: Int32
+    var height: Int32
 
     var array = [CMSampleBuffer]()
 
@@ -24,8 +26,18 @@ class H264Encoder {
             print("H264Coder outputCallback sampleBuffer NULL or status: \(status)")
             return
         }
-
+      
+        if (!CMSampleBufferDataIsReady(sampleBuffer))
+        {
+            print("didCompressH264 data is not ready...");
+            return;
+        }
         let encoder: H264Encoder = Unmanaged<H264Encoder>.fromOpaque(refcon).takeUnretainedValue()
+        
+//        Attempting to get keyFrame
+//        guard let attachmentsArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: true) else { return }
+//        let dict = unsafeBitCast(CFArrayGetValueAtIndex(attachmentsArray, 0), to: CFDictionary.self) as NSDictionary
+//        print("keys: \(dict.attributeKeys)")
         encoder.processSample(sampleBuffer)
     }
 
@@ -98,14 +110,25 @@ class H264Encoder {
 
     init(width: Int32, height: Int32, callback: @escaping (CMSampleBuffer) -> Void) {
         self.callback = callback
+        self.width = width;
+        self.height = height;
+    }
+  
+    func prepareToEncodeFrames() {
         let encoderSpecification = [
             kVTVideoEncoderSpecification_RequireHardwareAcceleratedVideoEncoder: true as CFBoolean
         ] as CFDictionary
-        var status = VTCompressionSessionCreate(allocator: kCFAllocatorDefault, width: width, height: height, codecType: kCMVideoCodecType_H264, encoderSpecification: encoderSpecification, imageBufferAttributes: nil, compressedDataAllocator: nil, outputCallback: outputCallback, refcon: Unmanaged.passUnretained(self).toOpaque(), compressionSessionOut: &session)
+        var status = VTCompressionSessionCreate(allocator: kCFAllocatorDefault, width: self.width, height: self.height, codecType: kCMVideoCodecType_H264, encoderSpecification: encoderSpecification, imageBufferAttributes: nil, compressedDataAllocator: nil, outputCallback: outputCallback, refcon: Unmanaged.passUnretained(self).toOpaque(), compressionSessionOut: &session)
         print("H264Coder init \(status == noErr) \(status)")
         // This demonstrates setting a property after the session has been created
         guard let compressionSession = session else { return }
-        status = VTSessionSetProperty(compressionSession, key: kVTCompressionPropertyKey_RealTime, value: kCFBooleanTrue)
+        VTSessionSetProperty(compressionSession, key: kVTCompressionPropertyKey_RealTime, value: kCFBooleanTrue)
+        VTSessionSetProperty(compressionSession, key: kVTCompressionPropertyKey_ProfileLevel, value: kVTProfileLevel_H264_Main_AutoLevel)
+        VTSessionSetProperty(compressionSession, key: kVTCompressionPropertyKey_AllowFrameReordering, value: kCFBooleanFalse)
+        var fps = 10
+        VTSessionSetProperty(compressionSession, key: kVTCompressionPropertyKey_ExpectedFrameRate, value: CFNumberCreate(kCFAllocatorDefault, CFNumberType.intType, &fps))
+        
+        VTCompressionSessionPrepareToEncodeFrames(compressionSession)
     }
 
     func encode(_ sampleBuffer: CMSampleBuffer) {

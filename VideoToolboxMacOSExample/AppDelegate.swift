@@ -18,7 +18,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
   let cameraView = VideoView()
   let decoderView = VideoView()
   
-  
+
   private var encoder: H264Encoder?
   private var decoder: H264Decoder?
   
@@ -29,7 +29,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
     cameraWindow = NSWindow(
         contentRect: NSRect(x: 0, y: 0, width: 480, height: 300),
         styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
-        backing: .buffered, defer: false)
+        backing: .buffered,
+        defer: false)
     cameraWindow.isReleasedWhenClosed = false
     cameraWindow.center()
     cameraWindow.setTitleWithRepresentedFilename("Camera view")
@@ -48,6 +49,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
     decompressedWindow.contentView = NSHostingView(rootView: decoderView)
     decompressedWindow.makeKeyAndOrderFront(nil)
     
+    // Create encoder here (at the expense of dynamic setting of height and width)
+    encoder = H264Encoder(width: 1280, height: 720, callback: { encodedBuffer in
+      // self.sampleBufferNoOpProcessor(encodedBuffer) // Logs the buffers to the console for inspection
+      self.decodeCompressedFrame(encodedBuffer) // uncomment to see decoded video
+    })
+    encoder?.prepareToEncodeFrames()
+    
     avManager.delegate = self
     avManager.start()
   }
@@ -60,15 +68,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
 
   func onSampleBuffer(_ sampleBuffer: CMSampleBuffer) {
       cameraView.render(sampleBuffer)
-      // guard let format = CMSampleBufferGetFormatDescription(sampleBuffer) else { return }
-      if encoder == nil,
-         let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer) {
-          let dimens = formatDescription.dimensions
-          encoder = H264Encoder(width: dimens.width, height: dimens.height, callback: { encodedBuffer in
-            self.sampleBufferNoOpProcessor(encodedBuffer) // Logs the buffers to the console for inspection
-            // self.decodeCompressedFrame(encodedBuffer) // uncomment to see decoded video
-          })
-      }
       encoder?.encode(sampleBuffer)
   }
 
