@@ -101,7 +101,7 @@ extension AppDelegate : H264EncoderDelegate {
         let spsbyteHeader:[UInt8] = [0,0,0,1]
         var spsbyteHeaderData = Data(spsbyteHeader)
         var ppsbyteHeaderData = Data(spsbyteHeader)
-        spsbyteHeaderData.append(sps)
+        spsbyteHeaderData.append(sps)   
         ppsbyteHeaderData.append(pps)
         // Could decode here
         // H264Decoder.decode(spsbyteHeaderData)

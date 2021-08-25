@@ -24,7 +24,7 @@ protocol H264EncoderDelegate: AnyObject {
 class H264Encoder {
 
     // MARK: - Properties
-    weak var delegate: AVManagerDelegate?
+    weak var delegate: H264EncoderDelegate?
     var session: VTCompressionSession?
     let callback: (CMSampleBuffer) -> Void
     var width: Int32
@@ -60,6 +60,30 @@ class H264Encoder {
                 isKeyFrame = true
             }
         }
+        
+        if(isKeyFrame) {
+            var description: CMFormatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)!
+            // First, get SPS
+            var sparamSetCount: size_t = 0
+            var sparamSetSize: size_t = 0
+            var sparameterSetPointer: UnsafePointer<UInt8>?
+            var statusCode: OSStatus = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(description, parameterSetIndex: 0, parameterSetPointerOut: &sparameterSetPointer, parameterSetSizeOut: &sparamSetSize, parameterSetCountOut: &sparamSetCount, nalUnitHeaderLengthOut: nil)
+            
+            if(statusCode == noErr) {
+                // Then, get PPS
+                var pparamSetCount: size_t = 0
+                var pparamSetSize: size_t = 0
+                var pparameterSetPointer: UnsafePointer<UInt8>?
+                var statusCode: OSStatus = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(description, parameterSetIndex: 0, parameterSetPointerOut: &pparameterSetPointer, parameterSetSizeOut: &pparamSetSize, parameterSetCountOut: &pparamSetCount, nalUnitHeaderLengthOut: nil)
+                if(statusCode == noErr) {
+                    var sps = NSData(bytes: sparameterSetPointer, length: sparamSetSize)
+                    var pps = NSData(bytes: pparameterSetPointer, length: pparamSetSize)
+                    encoder.delegate?.spsppsDataCallBack(sps as Data, pps: pps as Data)
+                }
+            }
+            
+        }
+        
         
         encoder.processSample(sampleBuffer)
     }
