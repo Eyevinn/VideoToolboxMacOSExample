@@ -12,7 +12,7 @@ import VideoToolbox
 
 enum FrameType : UInt {
     case FrameType_SPSPPS
-    case FrameType_IFramse
+    case FrameType_IFrame
     case FrameType_PFrame
 }
 
@@ -82,6 +82,36 @@ class H264Encoder {
                 }
             }
             
+        }
+        
+        var dataBuffer: CMBlockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer)!
+        var length: size_t = 0
+        var totalLength: size_t = 0
+        var bufferDataPointer: UnsafeMutablePointer<Int8>?
+        var statusCodePtr: OSStatus = CMBlockBufferGetDataPointer(dataBuffer, atOffset: 0, lengthAtOffsetOut: &length, totalLengthOut: &totalLength, dataPointerOut: &bufferDataPointer)
+        if(statusCodePtr == noErr) {
+            var bufferOffset: size_t = 0
+            let AVCCHeaderLength: Int = 4
+            while(bufferOffset < totalLength - AVCCHeaderLength) {
+                // Read the NAL unit length
+                var NALUnitLength: UInt32 = 0
+                memcpy(&NALUnitLength, bufferDataPointer! + bufferOffset, AVCCHeaderLength)
+                //Big-Endian to Little-Endian
+                NALUnitLength = CFSwapInt32BigToHost(NALUnitLength)
+                
+                var data = NSData(bytes:(bufferDataPointer! + bufferOffset + AVCCHeaderLength), length: Int(NALUnitLength))
+                var frameType: FrameType = .FrameType_PFrame
+                var dataBytes = Data(bytes: data.bytes, count: data.length)
+                if((dataBytes[0] & 0x1F) == 5) {
+                    // I-Frame
+                    print("is IFrame")
+                    frameType = .FrameType_IFrame
+                }
+
+                encoder.delegate?.dataCallBack(data as Data, frameType: frameType)
+                // Move to the next NAL unit in the block buffer
+                bufferOffset += AVCCHeaderLength + size_t(NALUnitLength);
+            }
         }
         
         
