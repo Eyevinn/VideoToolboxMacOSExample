@@ -195,7 +195,7 @@ class H264Encoder {
         let encoderSpecification = [
             kVTVideoEncoderSpecification_RequireHardwareAcceleratedVideoEncoder: true as CFBoolean
         ] as CFDictionary
-        var status = VTCompressionSessionCreate(allocator: kCFAllocatorDefault, width: self.width, height: self.height, codecType: kCMVideoCodecType_H264, encoderSpecification: encoderSpecification, imageBufferAttributes: nil, compressedDataAllocator: nil, outputCallback: outputCallback, refcon: Unmanaged.passUnretained(self).toOpaque(), compressionSessionOut: &session)
+        let status = VTCompressionSessionCreate(allocator: kCFAllocatorDefault, width: self.width, height: self.height, codecType: kCMVideoCodecType_H264, encoderSpecification: encoderSpecification, imageBufferAttributes: nil, compressedDataAllocator: nil, outputCallback: outputCallback, refcon: Unmanaged.passUnretained(self).toOpaque(), compressionSessionOut: &session)
         print("H264Coder init \(status == noErr) \(status)")
         // This demonstrates setting a property after the session has been created
         guard let compressionSession = session else { return }
