@@ -23,7 +23,7 @@ class AVManager: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
 
     private let sessionQueue = DispatchQueue(label:"se.eyevinn.sessionQueue")
 
-    private let videoQueue = DispatchQueue(label: "videoQueue")
+    private let videoQueue = DispatchQueue(label: "se.eyevinn.videoQueue")
 
     private var connection: AVCaptureConnection!
 

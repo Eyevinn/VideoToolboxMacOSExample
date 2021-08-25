@@ -10,14 +10,13 @@ import Cocoa
 import SwiftUI
 
 @main
-class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate {
 
   var cameraWindow: NSWindow!
   var decompressedWindow: NSWindow!
   
   let cameraView = VideoView()
   let decoderView = VideoView()
-  
   
   private var encoder: H264Encoder?
   private var decoder: H264Decoder?
@@ -29,7 +28,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
     cameraWindow = NSWindow(
         contentRect: NSRect(x: 0, y: 0, width: 480, height: 300),
         styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
-        backing: .buffered, defer: false)
+        backing: .buffered,
+        defer: false)
     cameraWindow.isReleasedWhenClosed = false
     cameraWindow.center()
     cameraWindow.setTitleWithRepresentedFilename("Camera view")
@@ -48,28 +48,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
     decompressedWindow.contentView = NSHostingView(rootView: decoderView)
     decompressedWindow.makeKeyAndOrderFront(nil)
     
+    // Create encoder here (at the expense of dynamic setting of height and width)
+    encoder = H264Encoder(width: 1280, height: 720, callback: { encodedBuffer in
+      // self.sampleBufferNoOpProcessor(encodedBuffer) // Logs the buffers to the console for inspection
+      self.decodeCompressedFrame(encodedBuffer) // uncomment to see decoded video
+    })
+    encoder?.delegate = self
+    encoder?.prepareToEncodeFrames()
+    
     avManager.delegate = self
     avManager.start()
   }
 
   func applicationWillTerminate(_ aNotification: Notification) {
     // Insert code here to tear down your application
-  }
-
-  // MARK: - AVManagerDelegate
-
-  func onSampleBuffer(_ sampleBuffer: CMSampleBuffer) {
-      cameraView.render(sampleBuffer)
-      // guard let format = CMSampleBufferGetFormatDescription(sampleBuffer) else { return }
-      if encoder == nil,
-         let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer) {
-          let dimens = formatDescription.dimensions
-          encoder = H264Encoder(width: dimens.width, height: dimens.height, callback: { encodedBuffer in
-            self.sampleBufferNoOpProcessor(encodedBuffer) // Logs the buffers to the console for inspection
-            // self.decodeCompressedFrame(encodedBuffer) // uncomment to see decoded video
-          })
-      }
-      encoder?.encode(sampleBuffer)
   }
 
   private func sampleBufferNoOpProcessor(_ sampleBuffer: CMSampleBuffer) {
@@ -85,6 +77,35 @@ class AppDelegate: NSObject, NSApplicationDelegate, AVManagerDelegate {
       }
       decoder?.decode(sampleBuffer)
   }
+}
 
+// MARK: - AVManagerDelegate
+extension AppDelegate : AVManagerDelegate {
+    func onSampleBuffer(_ sampleBuffer: CMSampleBuffer) {
+        cameraView.render(sampleBuffer)
+        encoder?.encode(sampleBuffer)
+    }
+}
+// MARK: - H264EncoderDelegate
+
+extension AppDelegate : H264EncoderDelegate {
+    func dataCallBack(_ data: Data!, frameType: FrameType) {
+        let byteHeader:[UInt8] = [0,0,0,1]
+        var byteHeaderData = Data(byteHeader)
+        byteHeaderData.append(data)
+        // Could decode here
+        // H264Decoder.decode(byteHeaderData)
+    }
+
+    func spsppsDataCallBack(_ sps: Data!, pps: Data!) {
+        let spsbyteHeader:[UInt8] = [0,0,0,1]
+        var spsbyteHeaderData = Data(spsbyteHeader)
+        var ppsbyteHeaderData = Data(spsbyteHeader)
+        spsbyteHeaderData.append(sps)   
+        ppsbyteHeaderData.append(pps)
+        // Could decode here
+        // H264Decoder.decode(spsbyteHeaderData)
+        // H264Decoder.decode(ppsbyteHeaderData)
+    }
 }
 
