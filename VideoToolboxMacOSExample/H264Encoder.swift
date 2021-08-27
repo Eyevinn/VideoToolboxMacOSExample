@@ -55,15 +55,15 @@ class H264Encoder {
     //      Attempting to get keyFrame
             guard let attachmentsArray:CFArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false) else { return }
             if (CFArrayGetCount(attachmentsArray) > 0) {
-                let dict = CFArrayGetValueAtIndex(attachmentsArray, 0)
-                let dictRef:CFDictionary = unsafeBitCast(dict, to: CFDictionary.self)
+                let cfDict = CFArrayGetValueAtIndex(attachmentsArray, 0)
+                let dictRef: CFDictionary = unsafeBitCast(cfDict, to: CFDictionary.self)
+
                 let value = CFDictionaryGetValue(dictRef, unsafeBitCast(kCMSampleAttachmentKey_NotSync, to: UnsafeRawPointer.self))
-                if (value != nil) {
-                    print("Keyframe found...")
+                if(value == nil) {
                     isKeyFrame = true
                 }
             }
-            
+
             if(isKeyFrame) {
                 var description: CMFormatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)!
                 // First, get SPS
