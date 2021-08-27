@@ -29,6 +29,8 @@ class H264Encoder {
     let callback: (CMSampleBuffer) -> Void
     var width: Int32
     var height: Int32
+    var frameCount: Int64
+    var shouldUnpack: Bool
 
     var array = [CMSampleBuffer]()
 
@@ -46,75 +48,74 @@ class H264Encoder {
             return;
         }
         let encoder: H264Encoder = Unmanaged<H264Encoder>.fromOpaque(refcon).takeUnretainedValue()
-        
-        var isKeyFrame:Bool = false
+        if(encoder.shouldUnpack) {
+            var isKeyFrame:Bool = false
 
-//      Attempting to get keyFrame
-        guard let attachmentsArray:CFArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false) else { return }
-        if (CFArrayGetCount(attachmentsArray) > 0) {
-            let dict = CFArrayGetValueAtIndex(attachmentsArray, 0)
-            let dictRef:CFDictionary = unsafeBitCast(dict, to: CFDictionary.self)
-            let value = CFDictionaryGetValue(dictRef, unsafeBitCast(kCMSampleAttachmentKey_NotSync, to: UnsafeRawPointer.self))
-            if (value != nil) {
-                print("Keyframe found...")
-                isKeyFrame = true
-            }
-        }
-        
-        if(isKeyFrame) {
-            var description: CMFormatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)!
-            // First, get SPS
-            var sparamSetCount: size_t = 0
-            var sparamSetSize: size_t = 0
-            var sparameterSetPointer: UnsafePointer<UInt8>?
-            var statusCode: OSStatus = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(description, parameterSetIndex: 0, parameterSetPointerOut: &sparameterSetPointer, parameterSetSizeOut: &sparamSetSize, parameterSetCountOut: &sparamSetCount, nalUnitHeaderLengthOut: nil)
-            
-            if(statusCode == noErr) {
-                // Then, get PPS
-                var pparamSetCount: size_t = 0
-                var pparamSetSize: size_t = 0
-                var pparameterSetPointer: UnsafePointer<UInt8>?
-                var statusCode: OSStatus = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(description, parameterSetIndex: 0, parameterSetPointerOut: &pparameterSetPointer, parameterSetSizeOut: &pparamSetSize, parameterSetCountOut: &pparamSetCount, nalUnitHeaderLengthOut: nil)
-                if(statusCode == noErr) {
-                    var sps = NSData(bytes: sparameterSetPointer, length: sparamSetSize)
-                    var pps = NSData(bytes: pparameterSetPointer, length: pparamSetSize)
-                    encoder.delegate?.spsppsDataCallBack(sps as Data, pps: pps as Data)
+    //      Attempting to get keyFrame
+            guard let attachmentsArray:CFArray = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false) else { return }
+            if (CFArrayGetCount(attachmentsArray) > 0) {
+                let dict = CFArrayGetValueAtIndex(attachmentsArray, 0)
+                let dictRef:CFDictionary = unsafeBitCast(dict, to: CFDictionary.self)
+                let value = CFDictionaryGetValue(dictRef, unsafeBitCast(kCMSampleAttachmentKey_NotSync, to: UnsafeRawPointer.self))
+                if (value != nil) {
+                    print("Keyframe found...")
+                    isKeyFrame = true
                 }
             }
             
-        }
-        
-        var dataBuffer: CMBlockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer)!
-        var length: size_t = 0
-        var totalLength: size_t = 0
-        var bufferDataPointer: UnsafeMutablePointer<Int8>?
-        var statusCodePtr: OSStatus = CMBlockBufferGetDataPointer(dataBuffer, atOffset: 0, lengthAtOffsetOut: &length, totalLengthOut: &totalLength, dataPointerOut: &bufferDataPointer)
-        if(statusCodePtr == noErr) {
-            var bufferOffset: size_t = 0
-            let AVCCHeaderLength: Int = 4
-            while(bufferOffset < totalLength - AVCCHeaderLength) {
-                // Read the NAL unit length
-                var NALUnitLength: UInt32 = 0
-                memcpy(&NALUnitLength, bufferDataPointer! + bufferOffset, AVCCHeaderLength)
-                //Big-Endian to Little-Endian
-                NALUnitLength = CFSwapInt32BigToHost(NALUnitLength)
+            if(isKeyFrame) {
+                var description: CMFormatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)!
+                // First, get SPS
+                var sparamSetCount: size_t = 0
+                var sparamSetSize: size_t = 0
+                var sparameterSetPointer: UnsafePointer<UInt8>?
+                var statusCode: OSStatus = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(description, parameterSetIndex: 0, parameterSetPointerOut: &sparameterSetPointer, parameterSetSizeOut: &sparamSetSize, parameterSetCountOut: &sparamSetCount, nalUnitHeaderLengthOut: nil)
                 
-                var data = NSData(bytes:(bufferDataPointer! + bufferOffset + AVCCHeaderLength), length: Int(NALUnitLength))
-                var frameType: FrameType = .FrameType_PFrame
-                var dataBytes = Data(bytes: data.bytes, count: data.length)
-                if((dataBytes[0] & 0x1F) == 5) {
-                    // I-Frame
-                    print("is IFrame")
-                    frameType = .FrameType_IFrame
+                if(statusCode == noErr) {
+                    // Then, get PPS
+                    var pparamSetCount: size_t = 0
+                    var pparamSetSize: size_t = 0
+                    var pparameterSetPointer: UnsafePointer<UInt8>?
+                    var statusCode: OSStatus = CMVideoFormatDescriptionGetH264ParameterSetAtIndex(description, parameterSetIndex: 0, parameterSetPointerOut: &pparameterSetPointer, parameterSetSizeOut: &pparamSetSize, parameterSetCountOut: &pparamSetCount, nalUnitHeaderLengthOut: nil)
+                    if(statusCode == noErr) {
+                        var sps = NSData(bytes: sparameterSetPointer, length: sparamSetSize)
+                        var pps = NSData(bytes: pparameterSetPointer, length: pparamSetSize)
+                        encoder.delegate?.spsppsDataCallBack(sps as Data, pps: pps as Data)
+                    }
                 }
+            }
+            
+            var dataBuffer: CMBlockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer)!
+            var length: size_t = 0
+            var totalLength: size_t = 0
+            var bufferDataPointer: UnsafeMutablePointer<Int8>?
+            var statusCodePtr: OSStatus = CMBlockBufferGetDataPointer(dataBuffer, atOffset: 0, lengthAtOffsetOut: &length, totalLengthOut: &totalLength, dataPointerOut: &bufferDataPointer)
+            if(statusCodePtr == noErr) {
+                var bufferOffset: size_t = 0
+                let AVCCHeaderLength: Int = 4
+                while(bufferOffset < totalLength - AVCCHeaderLength) {
+                    // Read the NAL unit length
+                    var NALUnitLength: UInt32 = 0
+                    memcpy(&NALUnitLength, bufferDataPointer! + bufferOffset, AVCCHeaderLength)
+                    //Big-Endian to Little-Endian
+                    NALUnitLength = CFSwapInt32BigToHost(NALUnitLength)
+                    
+                    var data = NSData(bytes:(bufferDataPointer! + bufferOffset + AVCCHeaderLength), length: Int(Int32(NALUnitLength)))
+                    var frameType: FrameType = .FrameType_PFrame
+                    var dataBytes = Data(bytes: data.bytes, count: data.length)
+                    if((dataBytes[0] & 0x1F) == 5) {
+                        // I-Frame
+                        print("is IFrame")
+                        frameType = .FrameType_IFrame
+                    }
 
-                encoder.delegate?.dataCallBack(data as Data, frameType: frameType)
-                // Move to the next NAL unit in the block buffer
-                bufferOffset += AVCCHeaderLength + size_t(NALUnitLength);
+                    encoder.delegate?.dataCallBack(data as Data, frameType: frameType)
+                    // Move to the next NAL unit in the block buffer
+                    bufferOffset += AVCCHeaderLength + size_t(NALUnitLength);
+                }
             }
         }
-        
-        
+ 
         encoder.processSample(sampleBuffer)
     }
 
@@ -124,17 +125,7 @@ class H264Encoder {
             return
         }
 
-        guard let copiedSampleBuffer = copySB(sampleBuffer) else { return }
-
-        // trying to store sample buffers in queue. it kind of works, but the video is distorted. getting lots of: GVA error: scheduleDecodeFrame kVTVideoDecoderBadDataErr nal_size err : nal_size = 2787177045, acc_size = 2787283463, datasize = 110145, video_nal_count = 1, length_offset = 4, nal_unit_type  = 9...
-
-        array += [copiedSampleBuffer]
-        if array.count < 20 {
-            callback(copiedSampleBuffer)
-        } else {
-            let element = array.removeFirst()
-            callback(element)
-        }
+        callback(sampleBuffer)
     }
 
     private func copySB(_ sampleBuffer: CMSampleBuffer) -> CMSampleBuffer? {
@@ -187,8 +178,10 @@ class H264Encoder {
 
     init(width: Int32, height: Int32, callback: @escaping (CMSampleBuffer) -> Void) {
         self.callback = callback
-        self.width = width;
-        self.height = height;
+        self.width = width
+        self.height = height
+        self.frameCount = 0
+        self.shouldUnpack = true
     }
   
     func prepareToEncodeFrames() {
@@ -208,6 +201,21 @@ class H264Encoder {
         VTCompressionSessionPrepareToEncodeFrames(compressionSession)
     }
 
+    func encodeBySampleBuffer(_ sampleBuffer: CMSampleBuffer) {
+        // Get CV Image buffer
+        let imageBuffer: CVImageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
+        encodeByPixelBuffer(imageBuffer)
+    }
+    
+    func encodeByPixelBuffer(_ cvPixelBuffer: CVPixelBuffer) {
+        frameCount += 1
+        let imageBuffer: CVImageBuffer = cvPixelBuffer
+        // Make properties
+        let presentationTimeStamp = CMTimeMake(value: frameCount, timescale: 1000)
+        var _: OSStatus = VTCompressionSessionEncodeFrame(session!, imageBuffer: imageBuffer, presentationTimeStamp: presentationTimeStamp, duration: .invalid, frameProperties: nil, sourceFrameRefcon: nil, infoFlagsOut: nil)
+        
+    }
+    
     func encode(_ sampleBuffer: CMSampleBuffer) {
         guard let compressionSession = session,
               let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
@@ -218,6 +226,8 @@ class H264Encoder {
     func stop() {
         guard let session = session else { return }
         VTCompressionSessionInvalidate(session)
+        frameCount = 0
+        self.session = nil
     }
 
     deinit {

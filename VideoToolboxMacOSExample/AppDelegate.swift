@@ -56,12 +56,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     encoder?.delegate = self
     encoder?.prepareToEncodeFrames()
     
+    
+    
     avManager.delegate = self
     avManager.start()
   }
 
   func applicationWillTerminate(_ aNotification: Notification) {
     // Insert code here to tear down your application
+    encoder?.stop()
   }
 
   private func sampleBufferNoOpProcessor(_ sampleBuffer: CMSampleBuffer) {
@@ -83,7 +86,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 extension AppDelegate : AVManagerDelegate {
     func onSampleBuffer(_ sampleBuffer: CMSampleBuffer) {
         cameraView.render(sampleBuffer)
-        encoder?.encode(sampleBuffer)
+        encoder?.encodeBySampleBuffer(sampleBuffer)
     }
 }
 // MARK: - H264EncoderDelegate

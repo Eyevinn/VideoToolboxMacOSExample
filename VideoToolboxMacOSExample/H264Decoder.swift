@@ -24,8 +24,18 @@ class H264Decoder {
         decoder.processImage(imageBuffer, time: time, duration: duration)
     }
 
-    let handler: (CMSampleBuffer) -> Void
-
+    var cacheData: NSData? = nil
+    var sps: NSData? = nil
+    var pps: NSData? = nil
+    var formatDescription: CMVideoFormatDescription?
+    var decompressionSession: VTDecompressionSession?
+    
+    let handler: ((CMSampleBuffer) -> Void)?
+    
+    init() {
+        handler = nil
+    }
+    
     init(formatDescription: CMVideoFormatDescription, handler: @escaping (CMSampleBuffer) -> Void) {
         self.handler = handler
         let refcon = Unmanaged.passUnretained(self).toOpaque()
@@ -59,7 +69,7 @@ class H264Decoder {
             print("CMSampleBufferCreateReadyWithImageBuffer failure \(status)")
         }
         if let sb = sampleBuffer {
-            handler(sb)
+            handler?(sb)
         }
     }
 
