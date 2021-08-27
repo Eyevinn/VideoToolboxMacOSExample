@@ -29,6 +29,7 @@ class H264Encoder {
     let callback: (CMSampleBuffer) -> Void
     var width: Int32
     var height: Int32
+    var fps: Int32 = 10
 
     var array = [CMSampleBuffer]()
 
@@ -123,18 +124,18 @@ class H264Encoder {
             print("H264Coder outputCallback dataBuffer NIL")
             return
         }
-
-        guard let copiedSampleBuffer = copySB(sampleBuffer) else { return }
-
-        // trying to store sample buffers in queue. it kind of works, but the video is distorted. getting lots of: GVA error: scheduleDecodeFrame kVTVideoDecoderBadDataErr nal_size err : nal_size = 2787177045, acc_size = 2787283463, datasize = 110145, video_nal_count = 1, length_offset = 4, nal_unit_type  = 9...
-
-        array += [copiedSampleBuffer]
-        if array.count < 20 {
-            callback(copiedSampleBuffer)
-        } else {
-            let element = array.removeFirst()
-            callback(element)
-        }
+        callback(sampleBuffer)
+//        guard let copiedSampleBuffer = copySB(sampleBuffer) else { return }
+//
+//        // trying to store sample buffers in queue. it kind of works, but the video is distorted. getting lots of: GVA error: scheduleDecodeFrame kVTVideoDecoderBadDataErr nal_size err : nal_size = 2787177045, acc_size = 2787283463, datasize = 110145, video_nal_count = 1, length_offset = 4, nal_unit_type  = 9...
+//
+//        array += [copiedSampleBuffer]
+//        if array.count < 20 {
+//            callback(copiedSampleBuffer)
+//        } else {
+//            let element = array.removeFirst()
+//            callback(element)
+//        }
     }
 
     private func copySB(_ sampleBuffer: CMSampleBuffer) -> CMSampleBuffer? {
@@ -202,9 +203,7 @@ class H264Encoder {
         VTSessionSetProperty(compressionSession, key: kVTCompressionPropertyKey_RealTime, value: kCFBooleanTrue)
         VTSessionSetProperty(compressionSession, key: kVTCompressionPropertyKey_ProfileLevel, value: kVTProfileLevel_H264_Main_AutoLevel)
         VTSessionSetProperty(compressionSession, key: kVTCompressionPropertyKey_AllowFrameReordering, value: kCFBooleanFalse)
-        var fps = 10
-        VTSessionSetProperty(compressionSession, key: kVTCompressionPropertyKey_ExpectedFrameRate, value: CFNumberCreate(kCFAllocatorDefault, CFNumberType.intType, &fps))
-        
+        VTSessionSetProperty(compressionSession, key: kVTCompressionPropertyKey_ExpectedFrameRate, value: CFNumberCreate(kCFAllocatorDefault, CFNumberType.intType, &self.fps))
         VTCompressionSessionPrepareToEncodeFrames(compressionSession)
     }
 
