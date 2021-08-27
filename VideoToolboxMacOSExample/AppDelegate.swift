@@ -54,6 +54,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       self.decodeCompressedFrame(encodedBuffer) // uncomment to see decoded video
     })
     encoder?.delegate = self
+    encoder?.fps = 15
     encoder?.prepareToEncodeFrames()
     
     avManager.delegate = self
